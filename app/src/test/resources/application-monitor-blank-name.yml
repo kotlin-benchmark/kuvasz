@@ -1,0 +1,4 @@
+http-monitors:
+  - name: ''
+    url: https://example.com
+    uptime-check-interval: 120

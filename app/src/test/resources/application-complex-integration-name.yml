@@ -1,0 +1,7 @@
+integrations:
+  slack:
+    - name: "ThisOneContéins!SpecialChara#cters$AndColons:Spaces Toő"
+      webhook-url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXX
+    - name: Global2
+      webhook-url: https://hooks.slack.com/services/T00000000/B00000000/YYYYYYYYYY
+      global: true

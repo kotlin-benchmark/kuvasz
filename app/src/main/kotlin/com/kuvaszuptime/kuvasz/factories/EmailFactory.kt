@@ -1,0 +1,72 @@
+package com.kuvaszuptime.kuvasz.factories
+
+import com.kuvaszuptime.kuvasz.i18n.Messages
+import com.kuvaszuptime.kuvasz.jooq.enums.SslStatus
+import com.kuvaszuptime.kuvasz.models.events.MaintenanceWindowEndEvent
+import com.kuvaszuptime.kuvasz.models.events.MaintenanceWindowEvent
+import com.kuvaszuptime.kuvasz.models.events.MaintenanceWindowStartEvent
+import com.kuvaszuptime.kuvasz.models.events.SSLMonitorEvent
+import com.kuvaszuptime.kuvasz.models.events.UptimeMonitorEvent
+import com.kuvaszuptime.kuvasz.models.events.formatters.PlainTextMessageFormatter
+import com.kuvaszuptime.kuvasz.models.events.formatters.getEmoji
+import com.kuvaszuptime.kuvasz.models.handlers.EmailNotificationConfig
+import jakarta.mail.Message
+import org.simplejavamail.api.email.Email
+import org.simplejavamail.email.EmailBuilder
+import org.simplejavamail.recipient.RecipientBuilder
+
+class EmailFactory(private val config: EmailNotificationConfig) {
+
+    private val formatter = PlainTextMessageFormatter
+
+    fun fromUptimeEvent(event: UptimeMonitorEvent): Email =
+        createEmailBase()
+            .withSubject(event.getSubject())
+            .withPlainText(formatter.toFormattedMessage(event))
+            .buildEmail()
+
+    fun fromSSLEvent(event: SSLMonitorEvent): Email =
+        createEmailBase()
+            .withSubject(event.getSubject())
+            .withPlainText(formatter.toFormattedMessage(event))
+            .buildEmail()
+
+    fun fromMaintenanceEvent(event: MaintenanceWindowEvent): Email =
+        createEmailBase()
+            .withSubject(event.getSubject())
+            .withPlainText(formatter.toFormattedMessage(event))
+            .buildEmail()
+
+    private fun UptimeMonitorEvent.getSubject(): String =
+        "[kuvasz-uptime] - ${getEmoji()} [${monitor.name}] is $uptimeStatus"
+
+    private fun SSLMonitorEvent.getSubject(): String {
+        val statusString = when (sslStatus) {
+            SslStatus.VALID -> Messages.hasAValidCertificate()
+            SslStatus.INVALID -> Messages.hasAnInvalidCertificate()
+            SslStatus.WILL_EXPIRE -> Messages.hasAnExpiringCertificate()
+        }
+
+        return "[kuvasz-uptime] - ${getEmoji()} [${monitor.name}] $statusString"
+    }
+
+    private fun MaintenanceWindowEvent.getSubject(): String {
+        val statusString = when (this) {
+            is MaintenanceWindowStartEvent -> Messages.maintenanceWindowStarted(window.name)
+            is MaintenanceWindowEndEvent -> Messages.maintenanceWindowEnded(window.name)
+        }
+
+        return "[kuvasz-uptime] - ${getEmoji()} $statusString"
+    }
+
+    private fun createEmailBase() =
+        EmailBuilder
+            .startingBlank()
+            .withRecipients(config.recipient())
+            .from(config.fromAddress, config.fromAddress)
+}
+
+fun EmailNotificationConfig.recipient() = RecipientBuilder()
+    .withAddress(toAddress)
+    .withType(Message.RecipientType.TO)
+    .build()

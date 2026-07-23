@@ -1,0 +1,121 @@
+package com.kuvaszuptime.kuvasz.models.dto.statuspage
+
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.kuvaszuptime.kuvasz.jooq.enums.UptimeStatus
+import com.kuvaszuptime.kuvasz.models.statuspage.SystemStatus
+import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDate
+import java.time.OffsetDateTime
+
+data class StatusPageDataDto(
+    val title: String,
+    val customLogoUrl: String?,
+    val customFaviconUrl: String?,
+    val systemStatus: SystemStatus,
+    val generatedAt: OffsetDateTime,
+    val monitors: List<StatusPageMonitorDetailsDto>,
+    val activeMaintenanceWindows: List<StatusPageMaintenanceWindowDto> = emptyList(),
+    val upcomingMaintenanceWindows: List<StatusPageMaintenanceWindowDto> = emptyList(),
+)
+
+data class StatusPageMaintenanceWindowDto(
+    val name: String,
+    val description: String?,
+    val start: OffsetDateTime?,
+    val end: OffsetDateTime?,
+) {
+    companion object
+}
+
+@Schema(
+    oneOf = [
+        StatusPagePushMonitorDetailsDto::class,
+        StatusPageHttpMonitorDetailsDto::class,
+        StatusPageIcmpMonitorDetailsDto::class,
+        StatusPageTcpMonitorDetailsDto::class,
+    ]
+)
+// JSON subtypes are needed only for the tests
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.EXISTING_PROPERTY,
+    property = "type",
+    visible = false,
+)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = StatusPagePushMonitorDetailsDto::class, name = "push"),
+    JsonSubTypes.Type(value = StatusPageHttpMonitorDetailsDto::class, name = "http"),
+    JsonSubTypes.Type(value = StatusPageIcmpMonitorDetailsDto::class, name = "icmp"),
+    JsonSubTypes.Type(value = StatusPageTcpMonitorDetailsDto::class, name = "tcp"),
+)
+sealed interface StatusPageMonitorDetailsDto {
+    val name: String
+    val type: String
+    val lastCheck: OffsetDateTime?
+    val uptimeRatio: Double?
+    val uptimeStatus: UptimeStatus?
+    val uptimeStatusHistory: List<StatusHistoryDto>
+    val inMaintenance: Boolean
+}
+
+sealed interface WithLatency {
+    val averageLatencyInMs: Int?
+}
+
+data class StatusPagePushMonitorDetailsDto(
+    override val name: String,
+    override val type: String = "push",
+    override val lastCheck: OffsetDateTime?,
+    override val uptimeRatio: Double?,
+    override val uptimeStatus: UptimeStatus?,
+    override val uptimeStatusHistory: List<StatusHistoryDto>,
+    override val inMaintenance: Boolean = false,
+    val lastHeartbeat: OffsetDateTime?,
+) : StatusPageMonitorDetailsDto
+
+data class StatusPageHttpMonitorDetailsDto(
+    override val name: String,
+    override val type: String = "http",
+    override val lastCheck: OffsetDateTime?,
+    override val uptimeRatio: Double?,
+    override val uptimeStatus: UptimeStatus?,
+    override val uptimeStatusHistory: List<StatusHistoryDto>,
+    override val averageLatencyInMs: Int?,
+    override val inMaintenance: Boolean = false,
+) : StatusPageMonitorDetailsDto, WithLatency
+
+data class StatusPageIcmpMonitorDetailsDto(
+    override val name: String,
+    override val type: String = "icmp",
+    override val lastCheck: OffsetDateTime?,
+    override val uptimeRatio: Double?,
+    override val uptimeStatus: UptimeStatus?,
+    override val uptimeStatusHistory: List<StatusHistoryDto>,
+    override val averageLatencyInMs: Int?,
+    val lastPacketLossPercentage: Int?,
+    override val inMaintenance: Boolean = false,
+) : StatusPageMonitorDetailsDto, WithLatency
+
+data class StatusPageTcpMonitorDetailsDto(
+    override val name: String,
+    override val type: String = "tcp",
+    override val lastCheck: OffsetDateTime?,
+    override val uptimeRatio: Double?,
+    override val uptimeStatus: UptimeStatus?,
+    override val uptimeStatusHistory: List<StatusHistoryDto>,
+    override val averageLatencyInMs: Int?,
+    override val inMaintenance: Boolean = false,
+) : StatusPageMonitorDetailsDto, WithLatency
+
+/**
+ * A data point in the uptime status history of the monitor.
+ *
+ * @param date The date of the data point.
+ * @param outageCnt The number of outages that occurred on that date. Null if there is no information for the given
+ * date (e.g. monitor was created after that date).
+ */
+data class StatusHistoryDto(
+    val date: LocalDate,
+    val outageCnt: Int?,
+)

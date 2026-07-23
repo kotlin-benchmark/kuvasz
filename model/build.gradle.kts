@@ -1,0 +1,192 @@
+import org.jooq.meta.jaxb.JSONConverterImplementation
+import org.jooq.meta.kotlin.database
+import org.jooq.meta.kotlin.forcedType
+import org.jooq.meta.kotlin.forcedTypes
+import org.jooq.meta.kotlin.generate
+import org.jooq.meta.kotlin.generator
+import org.jooq.meta.kotlin.jdbc
+import org.jooq.meta.kotlin.matchers
+import org.jooq.meta.kotlin.strategy
+import org.jooq.meta.kotlin.table
+import org.jooq.meta.kotlin.tables
+import org.jooq.meta.kotlin.target
+
+buildscript {
+    dependencies {
+        classpath("org.flywaydb:flyway-database-postgresql:${libs.versions.flywayPlugin.get()}")
+    }
+
+    configurations["classpath"].resolutionStrategy.eachDependency {
+        if (requested.group == "org.jooq") {
+            useVersion(libs.versions.jooq.get())
+        }
+    }
+}
+
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.micronaut.minimal.library)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
+    alias(libs.plugins.jooq)
+    alias(libs.plugins.flyway)
+
+}
+
+dependencies {
+
+    implementation(project(":shared"))
+    compileOnly(libs.i18n4k)
+
+    // Micronaut
+    implementation(mn.micronaut.core)
+    implementation(mn.micronaut.validation)
+    implementation(mn.jackson.module.kotlin)
+    implementation(mn.micronaut.http.client)
+    implementation(mn.micronaut.jackson.databind)
+
+    // OpenAPI & JsonSchema
+    kapt(mn.micronaut.openapi)
+    implementation(mn.swagger.annotations)
+    implementation(mn.micronaut.json.schema.annotations)
+
+    // DB & jOOQ & Flyway
+    implementation(libs.jooq.kotlin)
+    implementation(libs.jooq.postgres.extensions)
+    implementation(libs.jooq.jackson.extensions)
+    jooqGenerator(mn.postgresql)
+    implementation(libs.jooq.gradle.plugin)
+    runtimeOnly(mn.flyway.postgresql)
+
+    // Testing
+    kaptTest(mn.micronaut.inject.java)
+    testImplementation(mn.micronaut.test.kotest5)
+    testImplementation(mn.kotest.runner.junit5.jvm)
+    testImplementation(mn.kotest.assertions.core.jvm)
+    detektPlugins(libs.detekt.formatting)
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}
+
+val localDbUrl: String by project
+val localDbUser: String by project
+val localDbPassword: String by project
+val localDbSchema: String by project
+val localDbDriver: String by project
+
+flyway {
+    cleanDisabled = false
+    url = localDbUrl
+    user = localDbUser
+    password = localDbPassword
+    schemas = arrayOf(localDbSchema)
+    driver = localDbDriver
+}
+
+jooq {
+    version.set(libs.versions.jooq.get())
+
+    configurations {
+        create("main") {
+            generateSchemaSourceOnCompilation.set(false)
+
+            jooqConfiguration {
+                jdbc {
+                    driver = localDbDriver
+                    url = localDbUrl
+                    user = localDbUser
+                    password = localDbPassword
+                }
+                generator {
+                    strategy {
+                        matchers {
+                            tables {
+                                table {
+                                    expression = "HTTP_UPTIME_EVENT"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.UptimeEventRecord"
+                                }
+                                table {
+                                    expression = "PUSH_UPTIME_EVENT"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.UptimeEventRecord"
+                                }
+                                table {
+                                    expression = "ICMP_UPTIME_EVENT"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.UptimeEventRecord"
+                                }
+                                table {
+                                    expression = "TCP_UPTIME_EVENT"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.UptimeEventRecord"
+                                }
+                                table {
+                                    expression = "HTTP_MONITOR"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.MonitorRecord"
+                                }
+                                table {
+                                    expression = "PUSH_MONITOR"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.MonitorRecord"
+                                }
+                                table {
+                                    expression = "ICMP_MONITOR"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.MonitorRecord"
+                                }
+                                table {
+                                    expression = "TCP_MONITOR"
+                                    recordImplements = "com.kuvaszuptime.kuvasz.jooq.MonitorRecord"
+                                }
+                            }
+                        }
+                    }
+                    database {
+                        inputSchema = localDbSchema
+                        isOutputSchemaToDefault = false
+                        excludes = "flyway_schema_history"
+
+                        forcedTypes {
+                            forcedType {
+                                userType = "com.kuvaszuptime.kuvasz.models.handlers.IntegrationID[]"
+                                converter = "com.kuvaszuptime.kuvasz.jooq.TextArrayToIntegrationIdArrayConverter"
+                                isGenericConverter = false
+                                jsonConverterImplementation = JSONConverterImplementation.JACKSON_3
+                                includeExpression =
+                                    "HTTP_MONITOR.INTEGRATIONS|PUSH_MONITOR.INTEGRATIONS|ICMP_MONITOR.INTEGRATIONS|TCP_MONITOR.INTEGRATIONS|MAINTENANCE_WINDOW.INTEGRATIONS"
+                            }
+                            forcedType {
+                                userType = "com.kuvaszuptime.kuvasz.models.monitor.MonitorID[]"
+                                converter = "com.kuvaszuptime.kuvasz.jooq.TextArrayToMonitorIdArrayConverter"
+                                isGenericConverter = false
+                                jsonConverterImplementation = JSONConverterImplementation.JACKSON_3
+                                includeExpression = "STATUS_PAGE.MONITORS|MAINTENANCE_WINDOW.MONITORS"
+                            }
+                            forcedType {
+                                userType = "tools.jackson.databind.JsonNode"
+                                isJsonConverter = true
+                                jsonConverterImplementation = JSONConverterImplementation.JACKSON_3
+                                includeExpression = "HTTP_MONITOR.REQUEST_HEADERS|HTTP_MONITOR.EXPECTED_HEADERS"
+                            }
+                        }
+                    }
+                    generate {
+                        isDeprecated = false
+                        isValidationAnnotations = false
+                        isFluentSetters = true
+                        isPojos = true
+                    }
+                    target {
+                        directory = "src/jooq/java"
+                        packageName = "com.kuvaszuptime.kuvasz.jooq"
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register("migrateAndGenerate") {
+    group = "jooq"
+    description = "Runs the DB migrations via Flyway & then runs the jOOQ generator"
+    dependsOn("flywayMigrate")
+    dependsOn("generateJooq")
+}

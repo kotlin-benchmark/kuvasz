@@ -1,0 +1,55 @@
+openapi: 3.0.1
+info:
+  title: kuvasz
+  version: latest
+paths:
+  /api/v2/health:
+    get:
+      tags:
+        - Management
+      summary: Health endpoint
+      description: General health check endpoint
+      operationId: health
+      parameters: [ ]
+      responses:
+        "200":
+          description: Service is UP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResult'
+        "503":
+          description: Service is DOWN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResult'
+  /api/v2/prometheus:
+    get:
+      tags:
+        - Management
+      summary: Prometheus metrics endpoint
+      description: Exposes Prometheus metrics for monitoring
+      operationId: prometheusMetrics
+      parameters: [ ]
+      responses:
+        "200":
+          description: Metrics successfully retrieved
+          content:
+            text/plain:
+              schema:
+                type: string
+      security:
+        - apiKey: [ ]
+        - bearerAuth: [ ]
+components:
+  schemas:
+    HealthResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - UP
+            - DOWN
+            - UNKNOWN

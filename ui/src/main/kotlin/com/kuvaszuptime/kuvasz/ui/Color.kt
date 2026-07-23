@@ -1,0 +1,14 @@
+package com.kuvaszuptime.kuvasz.ui
+
+import com.kuvaszuptime.kuvasz.ui.CSSClass.*
+
+enum class Color(internal val bgColor: CSSClass, internal val textColor: CSSClass) {
+    DEFAULT(BG_DEFAULT, TEXT_DEFAULT_FG),
+    SUCCESS(BG_SUCCESS, TEXT_GREEN_FG),
+    YELLOW_LT(BG_YELLOW_LT, TEXT_YELLOW_LT_FG),
+    GREEN_LT(BG_GREEN_LT, TEXT_GREEN_LT_FG),
+    BLUE_LT(BG_BLUE_LT, TEXT_BLUE_LT_FG),
+    RED_LT(BG_RED_LT, TEXT_RED_LT_FG),
+    ORANGE_LT(BG_ORANGE_LT, TEXT_ORANGE_LT_FG),
+    PURPLE_LT(BG_PURPLE_LT, TEXT_PURPLE_LT_FG),
+}

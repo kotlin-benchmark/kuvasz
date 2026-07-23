@@ -1,0 +1,41 @@
+name: Release Helm Chart manually
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+env:
+  HELM_VERSION: v4.0.0
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Update Chart version
+        run: |
+          sed -i "s/^version:.*/version: ${{ inputs.version }}/" helm/kuvasz-uptime/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"${{ inputs.version }}\"/" helm/kuvasz-uptime/Chart.yaml
+      - name: Package Helm chart
+        run: |
+          helm package helm/kuvasz-uptime
+      - name: Push Helm chart to OCI registry
+        run: |
+          CHART_PACKAGE=$(ls kuvasz-uptime-*.tgz)
+          helm push $CHART_PACKAGE oci://ghcr.io/${{ github.repository_owner }}
+      - name: Log out from registry
+        if: always()
+        run: |
+          helm registry logout ghcr.io

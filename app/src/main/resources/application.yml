@@ -1,0 +1,200 @@
+---
+micronaut:
+  metrics:
+    enabled: ${ENABLE_METRICS_EXPORT:`false`}
+    export:
+      prometheus:
+        enabled: ${ENABLE_PROMETHEUS_EXPORT:`false`}
+        descriptions: ${ENABLE_PROMETHEUS_DESCRIPTIONS:`true`}
+      otlp:
+        enabled: ${ENABLE_OTLP_EXPORT:`false`}
+        url: ${OTLP_EXPORT_URL:}
+        headers: ${OTLP_EXPORT_HEADERS:}
+        step: ${OTLP_EXPORT_STEP:`PT1M`}
+    binders:
+      # Disable the built-in binders to reduce the number of metrics
+      executor.enabled: false
+      files.enabled: false
+      jdbc.enabled: false
+      jvm.enabled: false
+      logback.enabled: false
+      processor.enabled: false
+      uptime.enabled: false
+      web.enabled: false
+      cache.enabled: false
+  application:
+    name: kuvasz
+  mcp:
+    server:
+      enabled: ${ENABLE_MCP_SERVER:`false`}
+      transport: HTTP
+      reactive: false
+      info:
+        name: kuvasz-uptime
+        version: latest
+  security:
+    redirect:
+      forbidden:
+        enabled: false
+      unauthorized:
+        enabled: false
+      login-success: /
+      login-failure: /login?error=true
+      logout: /
+    authentication: cookie
+    endpoints:
+      login:
+        path: /auth/login
+        enabled: true
+      logout:
+        enabled: true
+        path: /auth/logout
+        get-allowed: true
+    enabled: ${ENABLE_AUTH:`true`}
+    token:
+      bearer:
+        enabled: true
+      generator:
+        access-token:
+          expiration: ${AUTH_MAX_AGE:`86400`}
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${random.uuid2}
+        generator:
+          refresh-token:
+            enabled: false
+    oauth2:
+      openid:
+        end-session:
+          redirect-uri: /auth/logout
+      clients:
+        oidc:
+          enabled: ${ENABLE_OIDC:`false`}
+          client-id: ${OIDC_CLIENT_ID:}
+          client-secret: ${OIDC_CLIENT_SECRET:}
+          authorization-server: ${OIDC_AUTH_SERVER:}
+          openid:
+            issuer: ${OIDC_ISSUER:}
+            end-session:
+              enabled: ${ENABLE_OIDC_END_SESSION:`true`}
+    intercept-url-map:
+      - pattern: /api/v2/health
+        access: isAnonymous()
+      # Push heartbeats are authenticated via the client secrets, implicitly
+      - pattern: /api/v2/push-monitors/heartbeats/**
+        access: isAnonymous()
+      - pattern: /api/**
+        access:
+          - ROLE_API
+      - pattern: /mcp
+        access:
+          - ROLE_MCP
+      - pattern: /auth/login
+        method: POST
+        access: isAnonymous()
+      - pattern: /**
+        access: isAnonymous()
+  router:
+    static-resources:
+      jsonschema:
+        paths: classpath:META-INF/schemas
+        mapping: /schemas/**
+      public:
+        paths: classpath:public
+        mapping: /public/**
+      robots:
+        paths: classpath:robots
+        mapping: /**
+  netty:
+    event-loops:
+      uptime-check:
+        num-threads: 4
+        prefer-native-transport: false
+  caches:
+    default-status-page:
+      expire-after-write: ${DEFAULT_STATUS_PAGE_CACHE_EXPIRES_AFTER:`PT5M`}
+      maximum-size: 1
+    status-pages:
+      expire-after-write: ${STATUS_PAGE_CACHE_EXPIRES_AFTER:`PT5M`}
+      maximum-size: ${STATUS_PAGE_CACHE_MAX_SIZE:`20`}
+    compiled-cron:
+      maximum-size: 100
+  server:
+    max-request-size: 10485760 # 10 MB
+    multipart:
+      max-file-size: 10485760 # 10 MB
+endpoints:
+  all.path: /api/v2/
+  health:
+    enabled: true
+    sensitive: false
+  prometheus:
+    sensitive: false # Otherwise it would be protected even if authentication is disabled
+---
+datasources:
+  default:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:postgres}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+    driverClassName: 'org.postgresql.Driver'
+    schema: 'kuvasz'
+    maximumPoolSize: 10
+---
+flyway:
+  datasources:
+    default:
+      enabled: true
+---
+jackson:
+  bean-introspection-module: false
+  serialization-inclusion: always
+  serialization:
+    - WRITE_DATES_AS_TIMESTAMPS: false
+---
+jooq:
+  datasources:
+    default:
+      sql-dialect: POSTGRES
+---
+logger:
+  levels:
+    io.netty.channel: ERROR
+    io.netty.handler: ERROR
+---
+# Kuvasz specific configurations are starting here
+app-config:
+  event-data-retention-days: ${EVENT_DATA_RETENTION_DAYS:`365`}
+  latency-data-retention-days: ${LATENCY_DATA_RETENTION_DAYS:`7`}
+  log-event-handler: ${ENABLE_LOG_EVENT_HANDLER:`true`}
+  language: ${APP_LANGUAGE:`en`}
+  check-updates: ${ENABLE_CHECK_UPDATES:`true`}
+  http-check-timeout-seconds: ${HTTP_CHECK_TIMEOUT_SECONDS:`30`}
+---
+admin-auth:
+  username: ${ADMIN_USER}
+  password: ${ADMIN_PASSWORD}
+  api-key: ${ADMIN_API_KEY:}
+  mcp-api-key: ${ADMIN_MCP_API_KEY:}
+  oidc:
+    allowed-emails: ${OIDC_ALLOWED_EMAILS:}
+    require-verified-email: ${OIDC_REQUIRE_VERIFIED_EMAIL:`true`}
+---
+metrics-exports:
+  http-uptime-status: ${ENABLE_HTTP_UPTIME_STATUS_EXPORT:`false`}
+  http-latest-latency: ${ENABLE_HTTP_LATEST_LATENCY_EXPORT:`false`}
+  ssl-status: ${ENABLE_SSL_STATUS_EXPORT:`false`}
+  ssl-expiry: ${ENABLE_SSL_EXPIRY_EXPORT:`false`}
+  push-uptime-status: ${ENABLE_PUSH_UPTIME_STATUS_EXPORT:`false`}
+  icmp-uptime-status: ${ENABLE_ICMP_UPTIME_STATUS_EXPORT:`false`}
+  icmp-latest-latency: ${ENABLE_ICMP_LATEST_LATENCY_EXPORT:`false`}
+  icmp-latest-packet-loss: ${ENABLE_ICMP_LATEST_PACKET_LOSS_EXPORT:`false`}
+  tcp-uptime-status: ${ENABLE_TCP_UPTIME_STATUS_EXPORT:`false`}
+  tcp-latest-latency: ${ENABLE_TCP_LATEST_LATENCY_EXPORT:`false`}
+---
+default-status-page:
+  public: ${PUBLISH_DEFAULT_STATUS_PAGE:`false`}
+  title: ${DEFAULT_STATUS_PAGE_TITLE:`System status`}
+  custom-logo-url: ${DEFAULT_STATUS_PAGE_LOGO_URL:}
+  custom-favicon-url: ${DEFAULT_STATUS_PAGE_FAVICON_URL:}

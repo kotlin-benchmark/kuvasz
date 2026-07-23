@@ -1,0 +1,33 @@
+http-monitors:
+  - name: test1
+    url: http://example.com
+    uptime-check-interval: 120
+    enabled: true
+    ssl-check-enabled: true
+    request-method: HEAD
+    latency-history-enabled: false
+    force-no-cache: false
+    follow-redirects: false
+    ssl-expiry-threshold: 15
+    failure-count-threshold: 2
+    expected-status-codes:
+      - 200
+      - 201
+    expected-keyword: "something"
+    expected-keyword-case-sensitive: true
+    expected-keyword-negated: true
+    response-time-threshold-millis: 500
+    request-headers:
+      User-Agent: "Mozilla/5.0"
+      X-Custom-Header: "custom-value"
+    expected-headers:
+      Content-Type: "application/json"
+      X-Example-Header: "example-value"
+    request-body: "{\"key\": \"value\"}"
+  - name: test2
+    url: http://example.org
+    uptime-check-interval: 60
+    sensitive-url: false
+  - name: test4
+    url: http://example.io
+    uptime-check-interval: 300

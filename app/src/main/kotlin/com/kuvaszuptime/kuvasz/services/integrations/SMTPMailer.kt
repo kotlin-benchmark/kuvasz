@@ -1,0 +1,45 @@
+package com.kuvaszuptime.kuvasz.services.integrations
+
+import com.kuvaszuptime.kuvasz.config.SMTPMailerConfig
+import com.kuvaszuptime.kuvasz.util.loggerFor
+import jakarta.inject.Singleton
+import org.simplejavamail.api.email.Email
+import org.simplejavamail.mailer.MailerBuilder
+import java.util.concurrent.CompletableFuture
+
+@Singleton
+class SMTPMailer(smtpMailerConfig: SMTPMailerConfig) {
+
+    companion object {
+        private val logger = loggerFor<SMTPMailer>()
+    }
+
+    private val mailerClient = run {
+        MailerBuilder
+            .withTransportStrategy(smtpMailerConfig.transportStrategy.toJavaMailerTransportStrategy())
+            .withSMTPServerHost(smtpMailerConfig.host)
+            .withSMTPServerPort(smtpMailerConfig.port)
+            .async()
+            .apply {
+                if (!smtpMailerConfig.username.isNullOrBlank() && !smtpMailerConfig.password.isNullOrBlank()) {
+                    withSMTPServerUsername(smtpMailerConfig.username)
+                        .withSMTPServerPassword(smtpMailerConfig.password)
+                }
+            }
+            .buildMailer()
+    }
+
+    init {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            mailerClient.testConnection(false)
+            logger.info("SMTP connection to ${smtpMailerConfig.host} has been set up successfully")
+        } catch (ex: Exception) {
+            logger.error("Connection to ${smtpMailerConfig.host} cannot be set up", ex)
+            throw ex
+        }
+    }
+
+    @Suppress("ForbiddenVoid")
+    fun sendAsync(email: Email): CompletableFuture<Void> = mailerClient.sendMail(email, true)
+}

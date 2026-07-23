@@ -1,0 +1,78 @@
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url('/public/ext/fonts/Inter-Light.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/public/ext/fonts/Inter-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('/public/ext/fonts/Inter-Medium.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('/public/ext/fonts/Inter-SemiBold.woff2') format('woff2');
+}
+
+/* Disable Tabler's default cv11 (single-storey "a") */
+body {
+    font-feature-settings: "cv11" 0 !important;
+}
+
+/* TomSelect clear button */
+div.ts-wrapper.form-select.plugin-clear_button > div.ts-control > div.clear-button {
+    border: none !important;
+    transform: translateY(-62%) !important;
+    font-size: 24px !important;
+}
+
+/* TomSelect item remove button */
+.ts-wrapper.plugin-remove_button:not(.rtl) .item .remove {
+    border-left: none !important;
+}
+
+.ts-wrapper .ts-control > div.item {
+    border-radius: 6px !important; /* Match the border-radius of the parent input */
+}
+
+/* TomSelect active option background - dark */
+[data-bs-theme=dark] .ts-wrapper .ts-dropdown .option.active {
+    background-color: var(--tblr-bg-forms) !important;
+}
+
+/* TomSelect active option background - light */
+[data-bs-theme=light] .ts-wrapper .ts-dropdown .option.active {
+    background-color: var(--tblr-gray-100) !important;
+}
+
+/* Native date/time inputs: hide the browser's calendar icon and open the picker on a click anywhere in the field */
+.native-datetime-input::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+.native-datetime-input:not(:disabled) {
+    cursor: pointer;
+}
+
+/* Image preview form element */
+.img-preview {
+    border: var(--tblr-border-width) solid var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius);
+    height: 42px;
+    width: 42px;
+    padding: 5px; /* Leaves 32 x 32px for the image */
+    object-fit: contain;
+}

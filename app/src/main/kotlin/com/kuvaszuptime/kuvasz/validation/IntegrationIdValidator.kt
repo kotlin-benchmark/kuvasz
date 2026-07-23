@@ -1,0 +1,54 @@
+package com.kuvaszuptime.kuvasz.validation
+
+import com.kuvaszuptime.kuvasz.models.handlers.IntegrationID
+import com.kuvaszuptime.kuvasz.models.handlers.InvalidIntegrationIDException
+import com.kuvaszuptime.kuvasz.services.integrations.IntegrationRepository
+import jakarta.inject.Singleton
+
+@Singleton
+class IntegrationIdValidator(private val integrationRepository: IntegrationRepository) {
+
+    private fun IntegrationID.checkIfConfigured(): IntegrationID {
+        if (!integrationRepository.configuredIntegrations.contains(this)) {
+            throw NonExistingIntegrationIdException("Non-existing integration ID found: $this.")
+        }
+        return this
+    }
+
+    /**
+     * Validates an array of integration IDs against the configured integrations.
+     *
+     * @throws NonExistingIntegrationIdException if any of the provided IDs are not configured.
+     */
+    fun validateIntegrationIds(ids: Array<IntegrationID>) = ids.forEach { id -> id.checkIfConfigured() }
+
+    /**
+     * Validates a list of integration IDs against the configured integrations.
+     *
+     * @return a set of valid integration IDs.
+     * @throws InvalidIntegrationIDException if any of the provided IDs are not configured.
+     * @throws NonExistingIntegrationIdException if any of the provided IDs are not existing.
+     */
+    fun validateIntegrationIds(rawIds: List<String>): Set<IntegrationID> = rawIds.map { id ->
+        IntegrationID.fromString(id)?.checkIfConfigured() ?: throw InvalidIntegrationIDException(id)
+    }.toSet()
+
+    fun resolveIntegrationIds(rawIds: List<String>): ResolvedIntegrationIds {
+        val configured = integrationRepository.configuredIntegrations
+        val valid = mutableSetOf<IntegrationID>()
+        val ignored = mutableListOf<String>()
+        rawIds.forEach { rawId ->
+            val parsed = IntegrationID.fromString(rawId)
+            if (parsed != null && configured.contains(parsed)) {
+                valid.add(parsed)
+            } else {
+                ignored.add(rawId)
+            }
+        }
+        return ResolvedIntegrationIds(valid = valid, ignored = ignored)
+    }
+}
+
+data class ResolvedIntegrationIds(val valid: Set<IntegrationID>, val ignored: List<String>)
+
+class NonExistingIntegrationIdException(message: String) : RuntimeException(message)

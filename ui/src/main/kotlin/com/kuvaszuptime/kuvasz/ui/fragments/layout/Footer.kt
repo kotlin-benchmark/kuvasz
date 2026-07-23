@@ -1,0 +1,92 @@
+package com.kuvaszuptime.kuvasz.ui.fragments.layout
+
+import com.kuvaszuptime.kuvasz.i18n.Messages
+import com.kuvaszuptime.kuvasz.models.settings.VersionInfo
+import com.kuvaszuptime.kuvasz.ui.*
+import com.kuvaszuptime.kuvasz.ui.CSSClass.*
+import com.kuvaszuptime.kuvasz.ui.components.*
+import com.kuvaszuptime.kuvasz.ui.icons.*
+import com.kuvaszuptime.kuvasz.ui.utils.*
+import kotlinx.html.*
+
+internal fun FlowContent.footer(versionInfo: VersionInfo) {
+    footer {
+        classes(CSSClass.FOOTER, FOOTER_TRANSPARENT)
+        div {
+            classes(CONTAINER_XL)
+            div {
+                classes(ROW, TEXT_CENTER, ALIGN_ITEMS_CENTER, FLEX_ROW_REVERSE)
+                div {
+                    classes(COL_LG_AUTO, MS_LG_AUTO)
+                    ul {
+                        classes(LIST_INLINE, LIST_INLINE_DOTS, MB_0)
+                        footerListItem(
+                            label = Messages.sponsor(),
+                            link = "https://kuvasz-uptime.dev/sponsoring/",
+                            externalLink = true,
+                            icon = Icon.HEART,
+                        )
+                        footerListItem(
+                            label = Messages.documentation(),
+                            link = "https://kuvasz-uptime.dev",
+                            externalLink = true,
+                        )
+                        footerListItem(
+                            label = Messages.license(),
+                            link = "https://github.com/kuvasz-uptime/kuvasz/blob/main/LICENSE",
+                            externalLink = true,
+                        )
+                        footerListItem(
+                            label = Messages.sourceCode(),
+                            link = "https://github.com/kuvasz-uptime/kuvasz",
+                            externalLink = true,
+                        )
+                    }
+                }
+                div {
+                    classes(COL_12, COL_LG_AUTO, MT_3, MT_LG_0)
+                    ul {
+                        classes(LIST_INLINE, LIST_INLINE_DOTS, MB_0)
+                        footerListItem(label = Messages.version(versionInfo.installedVersion)) {
+                            // Showing the update icon if a new version is available
+                            inlineVersionUpdateBadge(versionInfo)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+internal fun UL.footerListItem(
+    label: String,
+    link: String? = null,
+    externalLink: Boolean = false,
+    icon: Icon? = null,
+    extraContent: (LI.() -> Unit) = {},
+) {
+    li {
+        classes(LIST_INLINE_ITEM)
+        if (!link.isNullOrEmpty()) {
+            a(
+                href = link,
+            ) {
+                classes(LINK_SECONDARY)
+                if (externalLink) {
+                    targetBlank()
+                    relNoOpener()
+                }
+                icon?.let {
+                    span {
+                        classes(ME_2)
+                        icon(icon)
+                    }
+                }
+                +label
+            }
+        } else {
+            +label
+        }
+        extraContent()
+    }
+}

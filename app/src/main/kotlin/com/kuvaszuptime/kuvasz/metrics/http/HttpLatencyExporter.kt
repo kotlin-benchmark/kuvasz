@@ -1,0 +1,54 @@
+package com.kuvaszuptime.kuvasz.metrics.http
+
+import com.kuvaszuptime.kuvasz.jooq.tables.records.HttpMonitorRecord
+import com.kuvaszuptime.kuvasz.metrics.GaugeExporter
+import com.kuvaszuptime.kuvasz.metrics.MetricsExportConfig
+import com.kuvaszuptime.kuvasz.models.MonitorType
+import com.kuvaszuptime.kuvasz.models.monitor.http.numericMonitorId
+import com.kuvaszuptime.kuvasz.repositories.HttpLatencyLogRepository
+import com.kuvaszuptime.kuvasz.repositories.SharedMonitorRepository
+import com.kuvaszuptime.kuvasz.services.EventDispatcher
+import io.micrometer.core.instrument.MeterRegistry
+import io.micronaut.context.annotation.Requirements
+import io.micronaut.context.annotation.Requires
+import io.micronaut.core.util.StringUtils
+import jakarta.inject.Singleton
+
+@Singleton
+@Requirements(
+    Requires(bean = MeterRegistry::class),
+    Requires(property = "${MetricsExportConfig.CONFIG_PREFIX}.http-latest-latency", value = StringUtils.TRUE),
+)
+class HttpLatencyExporter(
+    meterRegistry: MeterRegistry,
+    private val eventDispatcher: EventDispatcher,
+    private val latencyLogRepository: HttpLatencyLogRepository,
+    monitorRepository: SharedMonitorRepository,
+) : GaugeExporter<Int, HttpMonitorRecord>(
+    meterRegistry,
+    eventDispatcher,
+    monitorRepository,
+    MonitorType.HTTP_SSL,
+) {
+
+    companion object {
+        private const val MONITOR_LATENCY = "http.latency.latest.milliseconds"
+    }
+
+    override val meterName = MONITOR_LATENCY
+
+    override fun subscribeToEvents() {
+        eventDispatcher.subscribeToHttpMonitorUpEvents { event ->
+            val latency = event.latency
+            logger.debug("Updating latency for monitor with ID: ${event.monitor.id} to $latency")
+            upsertMeter(event.monitor.numericMonitorId(), latency)
+        }
+    }
+
+    override fun transform(valueSource: Int): Long = valueSource.toLong()
+
+    override fun computeInitialValue(monitor: HttpMonitorRecord): Int? =
+        latencyLogRepository.fetchLastByMonitorId(monitor.id)?.latencyInMs
+
+    override fun filterCondition(monitor: HttpMonitorRecord): Boolean = monitor.enabled
+}

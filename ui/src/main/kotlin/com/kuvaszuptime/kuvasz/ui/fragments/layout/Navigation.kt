@@ -1,0 +1,183 @@
+package com.kuvaszuptime.kuvasz.ui.fragments.layout
+
+import com.kuvaszuptime.kuvasz.i18n.Messages
+import com.kuvaszuptime.kuvasz.ui.*
+import com.kuvaszuptime.kuvasz.ui.CSSClass.*
+import com.kuvaszuptime.kuvasz.ui.icons.*
+import com.kuvaszuptime.kuvasz.ui.utils.*
+import kotlinx.html.*
+
+internal fun FlowContent.navigation(
+    isAuthEnabled: Boolean,
+    isOidcLogoutEnabled: Boolean,
+    navbarMenuId: String,
+) {
+    header {
+        classes(NAVBAR_EXPAND_MD)
+        div {
+            classes(COLLAPSE, NAVBAR_COLLAPSE)
+            id = navbarMenuId
+            div {
+                classes(NAVBAR)
+                div {
+                    classes(CONTAINER_XL)
+                    div {
+                        classes(ROW, FLEX_COLUMN, FLEX_MD_ROW, FLEX_FILL, ALIGN_ITEMS_CENTER)
+                        // Main nav on the left
+                        div {
+                            classes(CSSClass.COL)
+                            ul {
+                                classes(NAVBAR_NAV)
+                                navItem(
+                                    label = Messages.dashboard(),
+                                    icon = Icon.DASHBOARD_OUTLINE,
+                                    link = "/",
+                                    externalLink = false,
+                                )
+                                navItemDropdown(
+                                    id = "monitors",
+                                    label = Messages.monitors(),
+                                    icon = Icon.BINOCULARS,
+                                    items = listOf(
+                                        NavItem(
+                                            label = "HTTP & SSL",
+                                            link = "/http-monitors",
+                                            icon = Icon.WORLD,
+                                        ),
+                                        NavItem(
+                                            label = "Push",
+                                            link = "/push-monitors",
+                                            icon = Icon.HEARTBEAT,
+                                        ),
+                                        NavItem(
+                                            label = "ICMP",
+                                            link = "/icmp-monitors",
+                                            icon = Icon.WAVE_SQUARE,
+                                        ),
+                                        NavItem(
+                                            label = "TCP",
+                                            link = "/tcp-monitors",
+                                            icon = Icon.NETWORK,
+                                        ),
+                                    )
+                                )
+                                navItem(
+                                    label = Messages.incidents(),
+                                    icon = Icon.FLAME,
+                                    link = "/incidents",
+                                    externalLink = false
+                                )
+                                navItem(
+                                    label = Messages.integrationsLabel(),
+                                    icon = Icon.PLUG,
+                                    link = "/integrations",
+                                    externalLink = false
+                                )
+                                navItem(
+                                    label = Messages.statusPages(),
+                                    icon = Icon.HEART_RATE_MONITOR,
+                                    link = "/status-pages",
+                                    externalLink = false
+                                )
+                                navItem(
+                                    label = Messages.maintenance(),
+                                    icon = Icon.TOOL,
+                                    link = "/maintenance-windows",
+                                    externalLink = false
+                                )
+                                navItem(
+                                    label = Messages.settings(),
+                                    icon = Icon.SETTINGS,
+                                    link = "/settings",
+                                    externalLink = false
+                                )
+                            }
+                        }
+                        // Secondary nav on the right
+                        if (isAuthEnabled) {
+                            div {
+                                classes(CSSClass.COL, COL_MD_AUTO)
+                                ul {
+                                    classes(NAVBAR_NAV)
+                                    navItem(
+                                        label = Messages.signOut(),
+                                        icon = Icon.LOGOUT_OUTLINE,
+                                        // With OIDC end-session enabled, log out through the IdP too
+                                        link = if (isOidcLogoutEnabled) "/oauth/logout" else "/auth/logout",
+                                        externalLink = false,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun UL.navItemDropdown(id: String, label: String, icon: Icon, items: List<NavItem>) {
+    li {
+        classes(NAV_ITEM, DROPDOWN)
+        a(href = "#navbar-$id") {
+            classes(NAV_LINK, DROPDOWN_TOGGLE)
+            ariaExpanded(false)
+            attributes["data-bs-auto-close"] = "outside"
+            role = "button"
+            ariaLabel(label)
+            dropdownToggler()
+            span {
+                classes(NAV_LINK_ICON, D_LG_INLINE_BLOCK)
+                icon(icon)
+            }
+            span {
+                classes(NAV_LINK_TITLE)
+                +label
+            }
+        }
+        div {
+            classes(DROPDOWN_MENU)
+            items.forEach { item ->
+                a(
+                    href = item.link,
+                    target = if (item.externalLink) "_blank" else null,
+                ) {
+                    classes(DROPDOWN_ITEM)
+                    if (item.externalLink) relNoOpener()
+                    ariaLabel(item.label)
+                    icon(item.icon)
+                    +item.label
+                }
+            }
+        }
+    }
+}
+
+private fun UL.navItem(label: String, icon: Icon, link: String, externalLink: Boolean = false) {
+    li {
+        classes(NAV_ITEM)
+        a(
+            href = link,
+            target = if (externalLink) "_blank" else null,
+        ) {
+            classes(NAV_LINK)
+            ariaLabel(label)
+            if (externalLink) relNoOpener()
+            span {
+                classes(NAV_LINK_ICON, D_LG_INLINE_BLOCK)
+                icon(icon)
+            }
+            span {
+                classes(NAV_LINK_TITLE)
+                +label
+            }
+        }
+    }
+}
+
+private data class NavItem(
+    val label: String,
+    val icon: Icon,
+    val link: String,
+    val externalLink: Boolean = false,
+)

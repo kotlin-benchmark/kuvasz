@@ -1,0 +1,28 @@
+---
+micronaut:
+  security:
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${random.uuid2}
+    enabled: false
+  mcp:
+    server:
+      enabled: true
+---
+datasources:
+  default:
+    initialPoolSize: 1
+    maximumPoolSize: 2
+    minimumIdle: 0
+    maxLifetime: 5000
+    idleTimeout: 1000
+---
+logger:
+  levels:
+#    org.jooq: DEBUG
+---
+# Disable the scheduled checks for updates in tests to avoid unnecessary noise and network calls during testing
+app-config.check-updates: false
