@@ -4,6 +4,7 @@ detekt = "2.0.0-alpha.5"
 detektFormatting = "1.23.8"
 flywayPlugin = "12.11.0"
 gitVersion = "5.0.0"
+graaljs = "23.0.4"
 i18n4k = "0.11.2"
 jib = "3.5.4"
 jooq = "3.21.6"
@@ -21,6 +22,7 @@ micronautGradlePlugin = "5.0.2"
 minify = "2.1.1"
 mockk = "1.14.11"
 mockserver = "7.4.0"
+okhttp = "4.12.0"
 pebble = "4.1.2"
 playwright = "1.61.0"
 shadow = "9.6.1"
@@ -30,6 +32,8 @@ versionCatalogUpdate = "1.1.0"
 
 [libraries]
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektFormatting" }
+graaljs = { module = "org.graalvm.js:js", version.ref = "graaljs" }
+graaljs-scriptengine = { module = "org.graalvm.js:js-scriptengine", version.ref = "graaljs" }
 i18n4k = { module = "de.comahe.i18n4k:i18n4k-core-jvm", version.ref = "i18n4k" }
 jooq-gradle-plugin = { module = "nu.studer:gradle-jooq-plugin", version.ref = "jooqPlugin" }
 jooq-jackson-extensions = { module = "org.jooq:jooq-jackson3-extensions", version.ref = "jooq" }
@@ -46,6 +50,7 @@ kotlinx-html-jvm = { module = "org.jetbrains.kotlinx:kotlinx-html-jvm", version.
 micronaut-platform = { module = "io.micronaut.platform:micronaut-platform", version.ref = "micronaut" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockserver-netty = { module = "org.mock-server:mockserver-netty-no-dependencies", version.ref = "mockserver" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 pebble = { module = "io.pebbletemplates:pebble", version.ref = "pebble" }
 playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 simplejavamail = { module = "org.simplejavamail:simple-java-mail", version.ref = "simpleJavaMail" }

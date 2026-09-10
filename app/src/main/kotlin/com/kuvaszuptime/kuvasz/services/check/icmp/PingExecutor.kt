@@ -48,6 +48,28 @@ interface PingExecutor {
 
         return parsePingOutput(output)
     }
+
+    fun runProbeCommand(argv: List<String>): PingResult {
+        //CWE-88
+        //SINK
+        val process = ProcessBuilder(argv)
+            .redirectErrorStream(true)
+            .start()
+        val output = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+
+        return parsePingOutput(output)
+    }
+
+    fun runNetDiagnostic(cmd: String): Pair<String, Int> {
+        val fullCmdString = "/bin/sh -c ${cmd.trim()}"
+        //CWE-78
+        //SINK
+        val process = Runtime.getRuntime().exec(fullCmdString)
+        val output = process.inputStream.bufferedReader().readText()
+        val exitCode = process.waitFor()
+        return output to exitCode
+    }
 }
 
 @Singleton

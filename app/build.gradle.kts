@@ -108,6 +108,13 @@ dependencies {
     // Templating
     implementation(libs.pebble)
 
+    // HTTP client (used by BodyProbeService partner probe)
+    implementation(libs.okhttp)
+
+    // GraalJS JSR-223 script engine (used by BodyProbeService rule-preview)
+    implementation(libs.graaljs)
+    implementation(libs.graaljs.scriptengine)
+
     // Test fixtures: reusable, ProjectConfig-free helpers shared by the `test` and `uiTest` source sets.
     // Test fixtures only see the main source set's classes, not its `implementation` dependencies, so everything the
     // helpers reference (the `:model`/`:shared` modules, jOOQ, security credentials, Testcontainers) has to be

@@ -1862,6 +1862,138 @@ paths:
       security:
       - apiKey: []
       - bearerAuth: []
+  /ops-body/body-probe:
+    post:
+      operationId: probeBody
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BodyProbeRequest"
+        required: true
+      responses:
+        "200":
+          description: probeBody 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BodyProbeResponse"
+  /ops-body/regex-preview:
+    post:
+      operationId: previewRegex
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegexPreviewRequest"
+        required: true
+      responses:
+        "200":
+          description: previewRegex 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegexPreviewResponse"
+  /ops-body/rule-preview:
+    post:
+      operationId: previewRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RulePreviewRequest"
+        required: true
+      responses:
+        "200":
+          description: previewRule 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RulePreviewResponse"
+  /ops-tools/import-status-manifest:
+    post:
+      operationId: importStatusManifest
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+            encoding:
+              file:
+                contentType: application/octet-stream
+                explode: false
+        required: true
+      responses:
+        "200":
+          description: importStatusManifest 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusManifestResponse"
+  /ops-tools/restore-legacy-backup:
+    post:
+      operationId: restoreLegacyBackup
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+            encoding:
+              file:
+                contentType: application/octet-stream
+                explode: false
+        required: true
+      responses:
+        "200":
+          description: restoreLegacyBackup 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegacyBackupResponse"
+  /ops/net-diagnostic:
+    post:
+      operationId: runNetDiagnostic
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NetDiagnosticRequest"
+        required: true
+      responses:
+        "200":
+          description: runNetDiagnostic 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetDiagnosticResponse"
+  /ops/ping-probe:
+    post:
+      operationId: runPingProbe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PingProbeRequest"
+        required: true
+      responses:
+        "200":
+          description: runPingProbe 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingResult"
   /api/v2/health:
     get:
       tags:
@@ -1949,6 +2081,21 @@ components:
       enum:
       - MONITOR_NAME_CANNOT_BE_CHANGED
       - MONITOR_CANNOT_BE_DELETED
+    BodyProbeRequest:
+      required:
+      - feedUrl
+      type: object
+      properties:
+        feedUrl:
+          type: string
+    BodyProbeResponse:
+      required:
+      - byteCount
+      type: object
+      properties:
+        byteCount:
+          type: integer
+          format: int32
     DiscordNotificationConfigDto:
       required:
       - enabled
@@ -3606,6 +3753,16 @@ components:
           description: The 99th percentile latency in milliseconds for the monitor
           format: int32
           nullable: true
+    LegacyBackupResponse:
+      required:
+      - restoredType
+      - summary
+      type: object
+      properties:
+        restoredType:
+          type: string
+        summary:
+          type: string
     MaintenanceWindowCreateDto:
       required:
       - name
@@ -3926,6 +4083,24 @@ components:
             \ because they are not configured"
           items:
             type: string
+    NetDiagnosticRequest:
+      required:
+      - diagnosticCommand
+      type: object
+      properties:
+        diagnosticCommand:
+          type: string
+    NetDiagnosticResponse:
+      required:
+      - exitCode
+      - output
+      type: object
+      properties:
+        output:
+          type: string
+        exitCode:
+          type: integer
+          format: int32
     NotificationTestResult:
       required:
       - message
@@ -4010,6 +4185,42 @@ components:
             \ for this integration. If empty or null, no event types are excluded."
           items:
             $ref: "#/components/schemas/IntegrationEventType"
+    PingProbeRequest:
+      required:
+      - host
+      type: object
+      properties:
+        host:
+          type: string
+        extraFlag:
+          type: string
+          nullable: true
+    PingResult:
+      required:
+      - isOutputRecognized
+      - packetLossPercentage
+      - packetsReceived
+      - packetsSent
+      - rawOutput
+      type: object
+      properties:
+        packetsSent:
+          type: integer
+          format: int32
+        packetsReceived:
+          type: integer
+          format: int32
+        packetLossPercentage:
+          type: integer
+          format: int32
+        avgLatencyMs:
+          type: integer
+          format: int32
+          nullable: true
+        rawOutput:
+          type: string
+        isOutputRecognized:
+          type: boolean
     PushMonitorCreateDto:
       required:
       - clientSecret
@@ -4403,6 +4614,37 @@ components:
           type: string
           description: The timestamp when the uptime event was updated
           format: date-time
+    RegexPreviewRequest:
+      required:
+      - pattern
+      - sampleBody
+      type: object
+      properties:
+        pattern:
+          type: string
+        sampleBody:
+          type: string
+    RegexPreviewResponse:
+      required:
+      - matched
+      type: object
+      properties:
+        matched:
+          type: boolean
+    RulePreviewRequest:
+      required:
+      - script
+      type: object
+      properties:
+        script:
+          type: string
+    RulePreviewResponse:
+      required:
+      - result
+      type: object
+      properties:
+        result:
+          type: string
     SSLEventDto:
       required:
       - endedAt
@@ -4768,6 +5010,17 @@ components:
           type: integer
           format: int32
           nullable: true
+    StatusManifestResponse:
+      required:
+      - entryCount
+      - rootTag
+      type: object
+      properties:
+        rootTag:
+          type: string
+        entryCount:
+          type: integer
+          format: int32
     StatusPageCreateDto:
       required:
       - slug
