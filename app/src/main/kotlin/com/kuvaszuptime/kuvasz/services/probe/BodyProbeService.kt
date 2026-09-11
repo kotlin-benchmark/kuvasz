@@ -58,9 +58,9 @@ internal object PartnerWebhookAuth {
 internal object RegexPreviewSupport {
     fun BodyProbeService.compileAndMatch(pattern: String, sampleBody: String): Boolean {
         require(pattern.length < 500) { "pattern must be shorter than 500 characters" }
+        val regex = Regex(pattern)
         //CWE-1333
         //SINK
-        val regex = Regex(pattern)
         return regex.containsMatchIn(sampleBody)
     }
 }

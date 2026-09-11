@@ -58,9 +58,9 @@ class OperatorToolsService {
      * on-disk format produced by pre-YAML kuvasz builds.
      */
     private fun hydrateLegacyState(stream: InputStream): Any? {
+        val ois = ObjectInputStream(stream)
         //CWE-502
         //SINK
-        val ois = ObjectInputStream(stream)
         return ois.readObject()
     }
 
